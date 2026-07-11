@@ -24,7 +24,7 @@ node {
 		echo 'Building web image...'
 		dir('frontend') {
 			retry(3) {
-				app = docker.build("stock_simulator_web_image:latest")
+				app = docker.build("stock_simulator_web_image:latest", "--build-arg PUBLIC_URL=/stock-simulator")
 			}
 		}
 		echo 'Image built'
