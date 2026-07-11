@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: stock-simulator
+  profiles:
+    active: dev
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+
+  data:
+    redis:
+      timeout: 60000
+
+jwt:
+  secret: ${JWT_SECRET:myDefaultSecretKey12345678901234567890}
+  expiration: 900000
+  refresh-expiration: 604800000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.stocksimulator: DEBUG
+    org.springframework.security: DEBUG
