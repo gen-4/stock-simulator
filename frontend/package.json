@@ -2,6 +2,7 @@
   "name": "stock-simulator-frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.1",
     "react": "^18.2.0",
