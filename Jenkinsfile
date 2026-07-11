@@ -31,8 +31,6 @@ node {
 	}
 
 	stage('Deploying stock_simulator') {
-		dir('/home/hera/scripts') {
-			sh 'restart_composition.sh'
-		}
+		sh '/home/hera/scripts/restart_composition.sh'
 	}
 }
