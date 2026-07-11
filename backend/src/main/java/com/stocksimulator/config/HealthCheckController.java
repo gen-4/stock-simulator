@@ -4,7 +4,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,11 +46,7 @@ public class HealthCheckController {
 
         // Check Redis using execute() instead of deprecated getConnection()
         try {
-            String pong = redisTemplate.execute((RedisConnection connection) -> {
-                StringRedisSerializer serializer = new StringRedisSerializer();
-                byte[] response = connection.ping();
-                return serializer.deserialize(response);
-            });
+            String pong = redisTemplate.execute((RedisConnection connection) -> connection.ping());
             health.put("redis", Map.of("status", "UP", "response", pong != null ? pong : "PONG"));
         } catch (Exception e) {
             log.error("Health check: redis FAILED - {}", e.getMessage());
