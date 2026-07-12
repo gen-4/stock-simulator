@@ -106,13 +106,16 @@ public class SimulationService {
                     nextInvestmentIdx++;
                 }
 
-                // Compute per-investment values
-                List<Double> perInvestmentValues = new ArrayList<>(investmentCount);
-                for (int i = 0; i < investmentCount; i++) {
-                    if (sharesPerInvestment[i] > 0) {
-                        perInvestmentValues.add(sharesPerInvestment[i] * priceOnDay);
-                    } else {
-                        perInvestmentValues.add(null);
+                // Compute per-investment values (only when needed)
+                List<Double> perInvestmentValues = null;
+                if ("per_investment".equals(displayMode)) {
+                    perInvestmentValues = new ArrayList<>(investmentCount);
+                    for (int i = 0; i < investmentCount; i++) {
+                        if (sharesPerInvestment[i] > 0) {
+                            perInvestmentValues.add(sharesPerInvestment[i] * priceOnDay);
+                        } else {
+                            perInvestmentValues.add(null);
+                        }
                     }
                 }
 

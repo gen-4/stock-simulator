@@ -2,7 +2,6 @@
   "name": "stock-simulator-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
   "type": "module",
   "dependencies": {
     "@reduxjs/toolkit": "^2.0.1",
@@ -27,22 +26,5 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
   }
 }

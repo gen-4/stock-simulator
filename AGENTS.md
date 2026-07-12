@@ -86,7 +86,7 @@ cd frontend
 npm install                     # Install dependencies
 npm start                       # Start dev server (port 3000)
 npm run build                   # Production build
-npm test -- --watchAll=false    # Run tests (non-interactive)
+npm test                            # Run tests (non-interactive)
 ```
 
 ## Spring Profiles
@@ -163,7 +163,7 @@ Tests use H2 in-memory database (test profile) and mock all external services (Y
 ### Frontend Tests (~55 tests)
 ```bash
 cd frontend
-npm test -- --watchAll=false --verbose    # Run all tests
+npm test -- --reporter=verbose            # Run all tests
 ```
 
 ### Frontend Test Coverage
@@ -243,4 +243,4 @@ npm test -- --watchAll=false --verbose    # Run all tests
 
 ### Frontend tests fail
 - Run `npm install` first to install dev dependencies (@testing-library/react, @testing-library/jest-dom)
-- Use `npm test -- --watchAll=false` to run non-interactively
+- Use `npm test` to run non-interactively

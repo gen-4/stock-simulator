@@ -38,7 +38,7 @@ const SimulationResults = () => {
         <div className={`summary-card ${result.totalGain >= 0 ? 'positive' : 'negative'}`}>
           <h4>Total Gain/Loss</h4>
           <p className="value">
-            {result.totalGain >= 0 ? '+' : ''}{result.totalGain.toLocaleString()}
+            {result.totalGain >= 0 ? '+$' : '-$'}{Math.abs(result.totalGain).toLocaleString()}
           </p>
           <p className="percentage">
             ({result.totalGainPercent >= 0 ? '+' : ''}{result.totalGainPercent.toFixed(2)}%)

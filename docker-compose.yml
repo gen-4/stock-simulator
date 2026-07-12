@@ -53,6 +53,7 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET}
+      FRONTEND_URL: https://cronushub.ddns.net
     volumes:
       - backend_logs:/var/log/stock_simulator
     networks:
@@ -63,7 +64,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: https://cronushub.ddns.net/stock-simulator-api/api
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080/api}
     container_name: stock_simulator_frontend
     ports:
       - "3000:80"

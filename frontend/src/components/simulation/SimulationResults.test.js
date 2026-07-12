@@ -93,7 +93,14 @@ describe('SimulationResults', () => {
     it('renders positive gain with + prefix', () => {
       renderWithStore({ result: sampleResult, loading: false, error: null });
       const gainCard = screen.getByText('Total Gain/Loss').closest('.summary-card');
-      expect(gainCard.querySelector('.value').textContent).toBe('+1,200');
+      expect(gainCard.querySelector('.value').textContent).toBe('+$1,200');
+    });
+
+    it('renders negative gain with -$ prefix', () => {
+      const negativeResult = { ...sampleResult, totalGain: -500, totalGainPercent: -10 };
+      renderWithStore({ result: negativeResult, loading: false, error: null });
+      const gainCard = screen.getByText('Total Gain/Loss').closest('.summary-card');
+      expect(gainCard.querySelector('.value').textContent).toBe('-$500');
     });
 
     it('renders gain card with positive class when gain >= 0', () => {
@@ -136,6 +143,28 @@ describe('SimulationResults', () => {
       renderWithStore({ result, loading: false, error: null });
       const chart = screen.getByTestId('mock-stock-chart');
       expect(chart).toHaveAttribute('data-inflation', 'true');
+    });
+
+    it('passes investmentLabels to StockChart when available', () => {
+      const resultWithLabels = {
+        ...sampleResult,
+        investmentLabels: ['2023-01-03', '2023-01-10'],
+        displayMode: 'per_investment',
+        dataPoints: [
+          { date: '2023-01-03', portfolioValue: 5000, totalInvested: 5000, gain: 0, gainPercent: 0 },
+          { date: '2023-01-04', portfolioValue: 6200, totalInvested: 5000, gain: 1200, gainPercent: 24 },
+        ],
+      };
+      renderWithStore({ result: resultWithLabels, loading: false, error: null });
+      const chart = screen.getByTestId('mock-stock-chart');
+      expect(chart).toHaveAttribute('data-labels', '["2023-01-03","2023-01-10"]');
+      expect(chart).toHaveAttribute('data-mode', 'per_investment');
+    });
+
+    it('passes empty investmentLabels to StockChart when not available', () => {
+      renderWithStore({ result: sampleResult, loading: false, error: null });
+      const chart = screen.getByTestId('mock-stock-chart');
+      expect(chart).toHaveAttribute('data-labels', '');
     });
   });
 });

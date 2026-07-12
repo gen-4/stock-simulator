@@ -63,8 +63,45 @@ describe('StockChart', () => {
     });
   });
 
-  describe('per_investment mode computes perInvestmentValue correctly', () => {
-    it('divides portfolioValue by investment count at each point', () => {
+  describe('per_investment mode with investmentLabels', () => {
+    it('renders per-investment lines when investmentLabels are provided', () => {
+      const data = [
+        {
+          date: '2023-01-03', portfolioValue: 1000, totalInvested: 1000, gain: 0, gainPercent: 0,
+          perInvestmentValues: [1000],
+        },
+        {
+          date: '2023-01-04', portfolioValue: 1050, totalInvested: 1000, gain: 50, gainPercent: 5,
+          perInvestmentValues: [1050],
+        },
+        {
+          date: '2023-01-05', portfolioValue: 2120, totalInvested: 2000, gain: 120, gainPercent: 6,
+          perInvestmentValues: [1050, 1070],
+        },
+        {
+          date: '2023-01-06', portfolioValue: 2200, totalInvested: 2000, gain: 200, gainPercent: 10,
+          perInvestmentValues: [1060, 1140],
+        },
+      ];
+      const labels = ['Jan 3 Buy', 'Jan 5 Buy'];
+      const { container } = render(
+        <StockChart data={data} displayMode="per_investment" investmentLabels={labels} />
+      );
+      expect(container.querySelector('.stock-chart')).toBeInTheDocument();
+    });
+
+    it('falls back to portfolioValue when no investmentLabels in per_investment mode', () => {
+      const data = [
+        { date: '2023-01-03', portfolioValue: 1000, totalInvested: 1000, gain: 0, gainPercent: 0 },
+        { date: '2023-01-04', portfolioValue: 1050, totalInvested: 1000, gain: 50, gainPercent: 5 },
+      ];
+      const { container } = render(
+        <StockChart data={data} displayMode="per_investment" />
+      );
+      expect(container.querySelector('.stock-chart')).toBeInTheDocument();
+    });
+
+    it('divides portfolioValue by investment count at each point (no perInvestmentValues)', () => {
       const data = [
         { date: '2023-01-03', portfolioValue: 1000, totalInvested: 1000, gain: 0, gainPercent: 0 },
         { date: '2023-01-04', portfolioValue: 1050, totalInvested: 1000, gain: 50, gainPercent: 5 },
@@ -72,7 +109,6 @@ describe('StockChart', () => {
         { date: '2023-01-06', portfolioValue: 2200, totalInvested: 2000, gain: 200, gainPercent: 10 },
       ];
       const { container } = render(<StockChart data={data} displayMode="per_investment" />);
-      // Should render without error — per_investment uses perInvestmentValue
       expect(container.querySelector('.stock-chart')).toBeInTheDocument();
     });
   });

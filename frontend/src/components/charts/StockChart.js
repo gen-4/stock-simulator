@@ -68,12 +68,15 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
     }
   };
 
+  const numInvestmentsForFallback = investmentLabels ? investmentLabels.length : 0;
+  const hasPerInvestmentDataForFallback = displayMode === 'per_investment' && numInvestmentsForFallback > 0;
+
   const getPrimaryDataKey = () => {
     switch (displayMode) {
       case 'percentage':
         return 'gainPercent';
       case 'per_investment':
-        return 'perInvestmentValue';
+        return hasPerInvestmentDataForFallback ? 'inv_0' : 'portfolioValue';
       case 'nominal':
         return 'gain';
       default:

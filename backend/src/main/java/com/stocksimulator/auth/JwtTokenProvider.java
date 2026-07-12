@@ -29,6 +29,12 @@ public class JwtTokenProvider {
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.expiration}") long accessExpirationMs,
             @Value("${jwt.refresh-expiration}") long refreshExpirationMs) {
+        if (secret == null || secret.isBlank() || secret.equals("myDefaultSecretKey12345678901234567890")) {
+            throw new IllegalStateException(
+                "JWT_SECRET environment variable must be set to a secure random string. " +
+                "The default value is not safe for production use."
+            );
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
         this.accessExpirationMs = accessExpirationMs;
         this.refreshExpirationMs = refreshExpirationMs;

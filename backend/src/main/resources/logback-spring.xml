@@ -44,7 +44,7 @@
             <appender-ref ref="CONSOLE" />
             <appender-ref ref="FILE" />
         </root>
-        <logger name="com.stocksimulator" level="DEBUG" />
+        <logger name="com.stocksimulator" level="INFO" />
         <logger name="org.springframework.security" level="WARN" />
     </springProfile>
 
