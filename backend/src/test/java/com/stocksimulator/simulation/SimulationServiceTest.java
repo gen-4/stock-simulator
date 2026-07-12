@@ -3,6 +3,7 @@ package com.stocksimulator.simulation;
 import com.stocksimulator.market.MarketDataService;
 import com.stocksimulator.market.dto.HistoricalPrice;
 import com.stocksimulator.simulation.dto.InvestmentInput;
+import com.stocksimulator.simulation.dto.SimulationDataPoint;
 import com.stocksimulator.simulation.dto.SimulationRequest;
 import com.stocksimulator.simulation.dto.SimulationResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -310,5 +311,95 @@ class SimulationServiceTest {
         assertNotNull(result);
         // 1330 / 133.0 = 10 shares, portfolio = 10 * 133 = 1330
         assertEquals(10.0, result.getDataPoints().get(0).getPortfolioValue() / 133.0, 0.01);
+    }
+
+    @Test
+    void simulate_inflationAdjusted_deflatesEntirePortfolioValue() {
+        // Setup: 10-day price series from 130.0 to 139.0
+        // Single investment of $1000 on Jan 3 at price 130.0 → 7.6923 shares
+        // By Jan 12 (price 139.0): portfolio = 7.6923 * 139.0 ≈ 1069.23
+        // CPI factor = 1.10 (10% inflation)
+        // Correct: inflationAdjustedValue = 1069.23 / 1.10 ≈ 972.03
+        // Wrong (old formula): 1000 + (69.23 / 1.10) ≈ 1062.93
+
+        when(marketDataService.getHistoricalPrices(eq("AAPL"), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(samplePrices);
+        when(inflationService.getCumulativeFactor(any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(1.10);
+
+        SimulationRequest request = SimulationRequest.builder()
+                .symbol("AAPL")
+                .investments(List.of(
+                        InvestmentInput.builder().amount(1000.0).date(LocalDate.of(2023, 1, 3)).build()
+                ))
+                .endDate(LocalDate.of(2023, 1, 12))
+                .inflationAdjusted(true)
+                .displayMode("accumulated")
+                .build();
+
+        SimulationResult result = simulationService.simulate(request);
+
+        // Find the last data point (Jan 12, price = 139.0)
+        var lastDp = result.getDataPoints().get(result.getDataPoints().size() - 1);
+        double expectedPortfolioValue = 1000.0 / 130.0 * 139.0; // ≈ 1069.23
+        double expectedInflationAdjusted = expectedPortfolioValue / 1.10; // ≈ 972.03
+
+        assertEquals(expectedPortfolioValue, lastDp.getPortfolioValue(), 0.01);
+        assertEquals(expectedInflationAdjusted, lastDp.getInflationAdjustedValue(), 0.01);
+
+        // Verify it's NOT the old wrong formula
+        double wrongFormulaResult = 1000.0 + ((expectedPortfolioValue - 1000.0) / 1.10);
+        assertNotEquals(wrongFormulaResult, lastDp.getInflationAdjustedValue(), 0.01,
+                "Inflation-adjusted value should not use the old incorrect formula");
+    }
+
+    @Test
+    void simulate_multipleInvestments_populatesPerInvestmentValues() {
+        when(marketDataService.getHistoricalPrices(eq("AAPL"), any(LocalDate.class), any(LocalDate.class)))
+                .thenReturn(samplePrices);
+
+        SimulationRequest request = SimulationRequest.builder()
+                .symbol("AAPL")
+                .investments(List.of(
+                        InvestmentInput.builder().amount(500.0).date(LocalDate.of(2023, 1, 3)).build(),
+                        InvestmentInput.builder().amount(1000.0).date(LocalDate.of(2023, 1, 5)).build()
+                ))
+                .endDate(LocalDate.of(2023, 1, 12))
+                .inflationAdjusted(false)
+                .displayMode("per_investment")
+                .build();
+
+        SimulationResult result = simulationService.simulate(request);
+
+        assertNotNull(result);
+        assertEquals("per_investment", result.getDisplayMode());
+        assertNotNull(result.getInvestmentLabels());
+        assertEquals(2, result.getInvestmentLabels().size());
+        assertTrue(result.getInvestmentLabels().get(0).contains("$500"));
+        assertTrue(result.getInvestmentLabels().get(1).contains("$1000"));
+
+        // Check per-investment values exist in data points
+        List<SimulationDataPoint> dataPoints = result.getDataPoints();
+        assertFalse(dataPoints.isEmpty());
+
+        // First data point (Jan 3): only investment 1 should have a value
+        SimulationDataPoint first = dataPoints.get(0);
+        assertNotNull(first.getPerInvestmentValues());
+        assertEquals(2, first.getPerInvestmentValues().size());
+        assertNotNull(first.getPerInvestmentValues().get(0), "First investment should have value on its date");
+        assertNull(first.getPerInvestmentValues().get(1), "Second investment should be null before its date");
+
+        // Last data point: both investments should have values
+        SimulationDataPoint last = dataPoints.get(dataPoints.size() - 1);
+        assertNotNull(last.getPerInvestmentValues().get(0));
+        assertNotNull(last.getPerInvestmentValues().get(1));
+
+        // Sum of per-investment values should equal portfolio value
+        double sumPerInvestment = last.getPerInvestmentValues().stream()
+                .filter(v -> v != null)
+                .mapToDouble(Double::doubleValue)
+                .sum();
+        assertEquals(last.getPortfolioValue(), sumPerInvestment, 0.01,
+                "Sum of per-investment values should equal total portfolio value");
     }
 }

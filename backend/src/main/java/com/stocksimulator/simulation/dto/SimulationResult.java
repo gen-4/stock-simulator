@@ -28,4 +28,6 @@ public class SimulationResult {
     private boolean inflationAdjusted;
 
     private String displayMode;
+
+    private List<String> investmentLabels;
 }
