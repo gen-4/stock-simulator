@@ -1,9 +1,12 @@
 package com.stocksimulator;
 
+import com.stocksimulator.config.AppProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
+@EnableConfigurationProperties(AppProperties.class)
 public class StockSimulatorApplication {
 
     public static void main(String[] args) {

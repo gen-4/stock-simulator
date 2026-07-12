@@ -21,6 +21,23 @@ jwt:
   expiration: 900000
   refresh-expiration: 604800000
 
+app:
+  cache:
+    quote-ttl-seconds: 60
+    history-ttl-seconds: 3600
+    inflation-ttl-hours: 24
+  rate-limit:
+    max-requests-per-minute: 10
+    window-ms: 60000
+  yahoo-finance:
+    base-url: https://query1.finance.yahoo.com
+    user-agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+    max-in-memory-size: 16777216
+    search-quotes-count: 10
+  bls:
+    base-url: https://api.bls.gov/publicAPI/v2/timeseries/data/
+    cpi-series-id: CUSR0000SA0
+
 management:
   endpoints:
     web:

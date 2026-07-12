@@ -3,6 +3,7 @@ package com.stocksimulator.market;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.stocksimulator.config.AppProperties;
 import com.stocksimulator.market.dto.StockQuote;
 import com.stocksimulator.market.dto.StockSearchResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,8 @@ class MarketDataServiceTest {
 
     @BeforeEach
     void setUp() {
+        AppProperties appProperties = new AppProperties();
+
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(webClient.get()).thenReturn(getUriSpec);
         lenient().when(getUriSpec.uri(anyString(), any(Object[].class))).thenReturn(getUriSpec);
@@ -56,7 +59,7 @@ class MarketDataServiceTest {
         lenient().when(getUriSpec.retrieve()).thenReturn(responseSpec);
         lenient().when(responseSpec.bodyToMono(String.class)).thenReturn(Mono.just("{}"));
 
-        marketDataService = new MarketDataService(webClient, redisTemplate, objectMapper);
+        marketDataService = new MarketDataService(webClient, redisTemplate, objectMapper, appProperties);
     }
 
     // ── getQuote tests ────────────────────────────────────────────────

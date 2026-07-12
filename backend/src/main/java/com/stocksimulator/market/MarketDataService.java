@@ -2,18 +2,18 @@ package com.stocksimulator.market;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stocksimulator.config.AppProperties;
 import com.stocksimulator.market.dto.HistoricalPrice;
 import com.stocksimulator.market.dto.StockQuote;
 import com.stocksimulator.market.dto.StockSearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,36 +24,22 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class MarketDataService {
 
-    private static final Logger log = LoggerFactory.getLogger(MarketDataService.class);
-
-    private static final String YAHOO_BASE_URL = "https://query1.finance.yahoo.com";
     private static final String QUOTE_CACHE_PREFIX = "quote:";
     private static final String HISTORY_CACHE_PREFIX = "history:";
-    private static final long QUOTE_CACHE_TTL_SECONDS = 60;
-    private static final long HISTORY_CACHE_TTL_SECONDS = 3600;
 
+    @Qualifier("yahooFinanceWebClient")
     private final WebClient webClient;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
-
-    public MarketDataService(
-            @Qualifier("yahooFinanceWebClient") WebClient webClient,
-            RedisTemplate<String, String> redisTemplate,
-            ObjectMapper objectMapper
-    ) {
-        this.webClient = webClient;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
-    }
+    private final AppProperties appProperties;
 
     /**
      * Fetches a real-time stock quote for the given symbol.
-     * Results are cached in Redis for 60 seconds.
-     *
-     * @param symbol the stock ticker symbol (e.g. "AAPL")
-     * @return the stock quote, or null if not found or an error occurs
+     * Results are cached in Redis for the configured TTL.
      */
     public StockQuote getQuote(String symbol) {
         String cacheKey = QUOTE_CACHE_PREFIX + symbol.toUpperCase();
@@ -84,7 +70,8 @@ public class MarketDataService {
             if (quote != null) {
                 try {
                     String json = objectMapper.writeValueAsString(quote);
-                    redisTemplate.opsForValue().set(cacheKey, json, QUOTE_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set(cacheKey, json,
+                            appProperties.getCache().getQuoteTtlSeconds(), TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.warn("Failed to cache quote for symbol {}: {}", symbol, e.getMessage());
                 }
@@ -103,12 +90,7 @@ public class MarketDataService {
 
     /**
      * Fetches historical daily prices for the given symbol and date range.
-     * Results are cached in Redis for 1 hour.
-     *
-     * @param symbol    the stock ticker symbol
-     * @param startDate the start date (inclusive)
-     * @param endDate   the end date (inclusive)
-     * @return list of historical prices, empty list if not found or on error
+     * Results are cached in Redis for the configured TTL.
      */
     public List<HistoricalPrice> getHistoricalPrices(String symbol, LocalDate startDate, LocalDate endDate) {
         String cacheKey = HISTORY_CACHE_PREFIX + symbol.toUpperCase() + ":" + startDate + ":" + endDate;
@@ -119,8 +101,8 @@ public class MarketDataService {
             if (cached != null) {
                 log.debug("Cache hit for historical prices: {} ({})", symbol, startDate);
                 return objectMapper.readValue(
-                        cached,
-                        objectMapper.getTypeFactory().constructCollectionType(List.class, HistoricalPrice.class)
+                    cached,
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, HistoricalPrice.class)
                 );
             }
         } catch (Exception e) {
@@ -135,11 +117,11 @@ public class MarketDataService {
         try {
             String response = webClient.get()
                     .uri(uriBuilder -> uriBuilder
-                            .path("/v8/finance/chart/{symbol}")
-                            .queryParam("period1", period1)
-                            .queryParam("period2", period2)
-                            .queryParam("interval", "1d")
-                            .build(symbol))
+                        .path("/v8/finance/chart/{symbol}")
+                        .queryParam("period1", period1)
+                        .queryParam("period2", period2)
+                        .queryParam("interval", "1d")
+                        .build(symbol))
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
@@ -150,7 +132,8 @@ public class MarketDataService {
             if (!prices.isEmpty()) {
                 try {
                     String json = objectMapper.writeValueAsString(prices);
-                    redisTemplate.opsForValue().set(cacheKey, json, HISTORY_CACHE_TTL_SECONDS, TimeUnit.SECONDS);
+                    redisTemplate.opsForValue().set(cacheKey, json,
+                            appProperties.getCache().getHistoryTtlSeconds(), TimeUnit.SECONDS);
                 } catch (Exception e) {
                     log.warn("Failed to cache historical prices for symbol {}: {}", symbol, e.getMessage());
                 }
@@ -169,9 +152,6 @@ public class MarketDataService {
 
     /**
      * Searches for stocks matching the given query string.
-     *
-     * @param query the search query (e.g. "Apple" or "TSLA")
-     * @return list of matching stock search results, empty list on error
      */
     public List<StockSearchResult> searchStocks(String query) {
         log.info("Searching stocks with query: {}", query);
@@ -181,7 +161,7 @@ public class MarketDataService {
                     .uri(uriBuilder -> uriBuilder
                             .path("/v1/finance/search")
                             .queryParam("q", query)
-                            .queryParam("quotesCount", 10)
+                            .queryParam("quotesCount", appProperties.getYahooFinance().getSearchQuotesCount())
                             .build())
                     .retrieve()
                     .bodyToMono(String.class)
@@ -220,7 +200,6 @@ public class MarketDataService {
             double change = currentPrice - previousClose;
             double changePercent = previousClose != 0 ? (change / previousClose) * 100.0 : 0.0;
 
-            // Extract intraday OHLCV data
             JsonNode timestamps = chart.path("timestamp");
             double open = 0.0;
             double dayHigh = 0.0;

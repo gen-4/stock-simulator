@@ -3,8 +3,8 @@ package com.stocksimulator.market;
 import com.stocksimulator.market.dto.HistoricalPrice;
 import com.stocksimulator.market.dto.StockQuote;
 import com.stocksimulator.market.dto.StockSearchResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,15 +18,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/market")
+@RequiredArgsConstructor
+@Slf4j
 public class MarketDataController {
 
-    private static final Logger log = LoggerFactory.getLogger(MarketDataController.class);
-
     private final MarketDataService marketDataService;
-
-    public MarketDataController(MarketDataService marketDataService) {
-        this.marketDataService = marketDataService;
-    }
 
     @GetMapping("/quote/{symbol}")
     public ResponseEntity<StockQuote> getQuote(@PathVariable String symbol) {

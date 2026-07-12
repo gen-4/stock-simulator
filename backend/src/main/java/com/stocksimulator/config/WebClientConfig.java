@@ -13,15 +13,17 @@ public class WebClientConfig {
 
     @Bean
     @Qualifier("yahooFinanceWebClient")
-    public WebClient yahooFinanceWebClient() {
+    public WebClient yahooFinanceWebClient(AppProperties appProperties) {
+        AppProperties.YahooFinance yfConfig = appProperties.getYahooFinance();
+
         ExchangeStrategies strategies = ExchangeStrategies.builder()
                 .codecs(configurer -> configurer.defaultCodecs()
-                        .maxInMemorySize(16 * 1024 * 1024))
+                        .maxInMemorySize(yfConfig.getMaxInMemorySize()))
                 .build();
 
         return WebClient.builder()
-                .baseUrl("https://query1.finance.yahoo.com")
-                .defaultHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .baseUrl(yfConfig.getBaseUrl())
+                .defaultHeader("User-Agent", yfConfig.getUserAgent())
                 .exchangeStrategies(strategies)
                 .clientConnector(new ReactorClientHttpConnector(HttpClient.create()))
                 .build();

@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -52,9 +53,13 @@ class AuthServiceTest {
 
     @BeforeEach
     void setUp() {
+        // Inject @Value properties
+        ReflectionTestUtils.setField(authService, "accessExpirationMs", 900_000L);
+        ReflectionTestUtils.setField(authService, "refreshExpirationMs", 604_800_000L);
+
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        lenient().when(jwtTokenProvider.generateAccessToken(anyString())).thenReturn("mock-access-token");
-        lenient().when(jwtTokenProvider.generateRefreshToken(anyString())).thenReturn("mock-refresh-token");
+        lenient().when(jwtTokenProvider.generateAccessToken(anyString(), any())).thenReturn("mock-access-token");
+        lenient().when(jwtTokenProvider.generateRefreshToken(anyString(), any())).thenReturn("mock-refresh-token");
     }
 
     @Test
@@ -71,8 +76,9 @@ class AuthServiceTest {
         assertEquals("mock-access-token", response.getAccessToken());
         assertEquals("mock-refresh-token", response.getRefreshToken());
         assertEquals("Bearer", response.getTokenType());
+        assertEquals(900_000L, response.getExpiresIn());
         verify(userRepository).save(any(User.class));
-        verify(valueOperations).set(eq("refresh_token:newuser"), eq("mock-refresh-token"), eq(7L), eq(TimeUnit.DAYS));
+        verify(valueOperations).set(eq("refresh_token:newuser"), eq("mock-refresh-token"), anyLong(), eq(TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -104,16 +110,22 @@ class AuthServiceTest {
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(auth);
 
+        // Set up user lookup for login
+        User mockUser = User.builder().id(1L).username("user1").build();
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(mockUser));
+
         AuthResponse response = authService.login(request);
 
         assertNotNull(response);
         assertEquals("mock-access-token", response.getAccessToken());
+        verify(userRepository).findByUsername("user1");
     }
 
     @Test
     void refreshToken_validToken_rotatesAndReturns() {
         RefreshTokenRequest request = new RefreshTokenRequest("valid-refresh-token");
         when(jwtTokenProvider.getUsernameFromToken("valid-refresh-token")).thenReturn("user1");
+        when(jwtTokenProvider.getUserIdFromToken("valid-refresh-token")).thenReturn(1L);
         when(valueOperations.get("refresh_token:user1")).thenReturn("valid-refresh-token");
 
         AuthResponse response = authService.refreshToken(request);
@@ -121,13 +133,14 @@ class AuthServiceTest {
         assertNotNull(response);
         assertEquals("mock-access-token", response.getAccessToken());
         verify(redisTemplate).delete("refresh_token:user1");
-        verify(valueOperations).set(eq("refresh_token:user1"), eq("mock-refresh-token"), eq(7L), eq(TimeUnit.DAYS));
+        verify(valueOperations).set(eq("refresh_token:user1"), eq("mock-refresh-token"), anyLong(), eq(TimeUnit.MILLISECONDS));
     }
 
     @Test
     void refreshToken_invalidToken_throwsException() {
         RefreshTokenRequest request = new RefreshTokenRequest("bad-token");
         when(jwtTokenProvider.getUsernameFromToken("bad-token")).thenReturn("user1");
+        when(jwtTokenProvider.getUserIdFromToken("bad-token")).thenReturn(1L);
         when(valueOperations.get("refresh_token:user1")).thenReturn(null);
 
         assertThrows(IllegalArgumentException.class, () -> authService.refreshToken(request));

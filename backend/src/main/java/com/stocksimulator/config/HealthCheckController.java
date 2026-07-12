@@ -1,7 +1,7 @@
 package com.stocksimulator.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +17,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/health")
+@RequiredArgsConstructor
+@Slf4j
 public class HealthCheckController {
-
-    private static final Logger log = LoggerFactory.getLogger(HealthCheckController.class);
 
     private final DataSource dataSource;
     private final RedisTemplate<String, String> redisTemplate;
-
-    public HealthCheckController(DataSource dataSource, RedisTemplate<String, String> redisTemplate) {
-        this.dataSource = dataSource;
-        this.redisTemplate = redisTemplate;
-    }
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> health() {
@@ -35,7 +30,6 @@ public class HealthCheckController {
         health.put("status", "UP");
         health.put("timestamp", Instant.now().toString());
 
-        // Check database
         try (Connection conn = dataSource.getConnection()) {
             health.put("database", Map.of("status", "UP", "valid", conn.isValid(5)));
         } catch (Exception e) {
@@ -44,7 +38,6 @@ public class HealthCheckController {
             health.put("status", "DOWN");
         }
 
-        // Check Redis using execute() instead of deprecated getConnection()
         try {
             String pong = redisTemplate.execute((RedisConnection connection) -> connection.ping());
             health.put("redis", Map.of("status", "UP", "response", pong != null ? pong : "PONG"));

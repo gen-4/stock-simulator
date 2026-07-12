@@ -6,8 +6,9 @@ import com.stocksimulator.auth.dto.RefreshTokenRequest;
 import com.stocksimulator.auth.dto.RegisterRequest;
 import com.stocksimulator.user.User;
 import com.stocksimulator.user.UserRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,13 +19,11 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class AuthService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
-
     private static final String REFRESH_TOKEN_KEY_PREFIX = "refresh_token:";
-    private static final long REFRESH_TOKEN_TTL_DAYS = 7;
-    private static final long ACCESS_TOKEN_EXPIRATION_MS = 900_000L; // 15 minutes
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,17 +31,11 @@ public class AuthService {
     private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticationManager authenticationManager;
 
-    public AuthService(UserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider,
-                       RedisTemplate<String, String> redisTemplate,
-                       AuthenticationManager authenticationManager) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.redisTemplate = redisTemplate;
-        this.authenticationManager = authenticationManager;
-    }
+    @Value("${jwt.expiration}")
+    private long accessExpirationMs;
+
+    @Value("${jwt.refresh-expiration}")
+    private long refreshExpirationMs;
 
     public AuthResponse register(RegisterRequest request) {
         log.info("Registration attempt for username='{}', email='{}'", request.getUsername(), request.getEmail());
@@ -64,17 +57,17 @@ public class AuthService {
         userRepository.save(user);
 
         log.info("User registered successfully: username='{}', id={}", user.getUsername(), user.getId());
-        return generateAndStoreTokens(user.getUsername());
+        return generateAndStoreTokens(user.getUsername(), user.getId());
     }
 
     public AuthResponse login(LoginRequest request) {
         log.info("Login attempt for username='{}'", request.getUsername());
 
         Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
+            new UsernamePasswordAuthenticationToken(
+                    request.getUsername(),
+                    request.getPassword()
+            )
         );
 
         if (!authentication.isAuthenticated()) {
@@ -82,8 +75,12 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid username or password");
         }
 
+        // Look up the user to get the ID for token embedding
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+
         log.info("Login successful for username='{}'", request.getUsername());
-        return generateAndStoreTokens(request.getUsername());
+        return generateAndStoreTokens(user.getUsername(), user.getId());
     }
 
     public AuthResponse refreshToken(RefreshTokenRequest request) {
@@ -91,6 +88,7 @@ public class AuthService {
 
         String token = request.getRefreshToken();
         String username = jwtTokenProvider.getUsernameFromToken(token);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
 
         if (username == null) {
             log.warn("Refresh failed: could not extract username from token");
@@ -107,9 +105,10 @@ public class AuthService {
 
         // Rotate: delete old token and issue new pair
         redisTemplate.delete(redisKey);
+        AuthResponse generatedTokens = generateAndStoreTokens(username, userId);
         log.info("Refresh token rotated for user '{}'", username);
 
-        return generateAndStoreTokens(username);
+        return generatedTokens;
     }
 
     public void logout(String refreshToken) {
@@ -124,21 +123,21 @@ public class AuthService {
         }
     }
 
-    private AuthResponse generateAndStoreTokens(String username) {
-        String accessToken = jwtTokenProvider.generateAccessToken(username);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(username);
+    private AuthResponse generateAndStoreTokens(String username, Long userId) {
+        String accessToken = jwtTokenProvider.generateAccessToken(username, userId);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(username, userId);
 
         String redisKey = REFRESH_TOKEN_KEY_PREFIX + username;
-        redisTemplate.opsForValue().set(redisKey, refreshToken, REFRESH_TOKEN_TTL_DAYS, TimeUnit.DAYS);
+        redisTemplate.opsForValue().set(redisKey, refreshToken, refreshExpirationMs, TimeUnit.MILLISECONDS);
 
-        log.debug("Generated token pair for user '{}', stored refresh token in Redis with {} day TTL",
-                username, REFRESH_TOKEN_TTL_DAYS);
+        log.debug("Generated token pair for user '{}' (id={}), stored refresh token in Redis with {}ms TTL",
+                username, userId, refreshExpirationMs);
 
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .tokenType("Bearer")
-                .expiresIn(ACCESS_TOKEN_EXPIRATION_MS)
+                .expiresIn(accessExpirationMs)
                 .build();
     }
 }

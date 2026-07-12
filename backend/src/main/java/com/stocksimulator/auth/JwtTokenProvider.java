@@ -1,9 +1,6 @@
 package com.stocksimulator.auth;
 
-import java.util.Date;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -16,11 +13,13 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 
 import javax.crypto.SecretKey;
+import java.util.Date;
 
 @Component
+@Slf4j
 public class JwtTokenProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtTokenProvider.class);
+    private static final String CLAIM_USER_ID = "userId";
 
     private final SecretKey secretKey;
     private final long accessExpirationMs;
@@ -36,52 +35,45 @@ public class JwtTokenProvider {
     }
 
     /**
-     * Generate an access token for the given username.
-     *
-     * @param username the subject of the token
-     * @return the signed JWT string
+     * Generate an access token for the given username and userId.
      */
-    public String generateAccessToken(String username) {
+    public String generateAccessToken(String username, Long userId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + accessExpirationMs);
 
         String token = Jwts.builder()
                 .subject(username)
+                .claim(CLAIM_USER_ID, userId)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
 
-        logger.info("Generated access token for user '{}' expires at {}", username, expiry);
+        log.info("Generated access token for user '{}' (id={}) expires at {}", username, userId, expiry);
         return token;
     }
 
     /**
-     * Generate a refresh token for the given username.
-     *
-     * @param username the subject of the token
-     * @return the signed JWT string
+     * Generate a refresh token for the given username and userId.
      */
-    public String generateRefreshToken(String username) {
+    public String generateRefreshToken(String username, Long userId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + refreshExpirationMs);
 
         String token = Jwts.builder()
                 .subject(username)
+                .claim(CLAIM_USER_ID, userId)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
 
-        logger.info("Generated refresh token for user '{}' expires at {}", username, expiry);
+        log.info("Generated refresh token for user '{}' (id={}) expires at {}", username, userId, expiry);
         return token;
     }
 
     /**
      * Extract the username (subject) from a token.
-     *
-     * @param token the JWT string
-     * @return the username
      */
     public String getUsernameFromToken(String token) {
         Claims claims = parseClaims(token);
@@ -89,10 +81,15 @@ public class JwtTokenProvider {
     }
 
     /**
+     * Extract the userId from a token.
+     */
+    public Long getUserIdFromToken(String token) {
+        Claims claims = parseClaims(token);
+        return claims.get(CLAIM_USER_ID, Long.class);
+    }
+
+    /**
      * Extract the expiration date from a token.
-     *
-     * @param token the JWT string
-     * @return the expiration date
      */
     public Date getExpirationFromToken(String token) {
         Claims claims = parseClaims(token);
@@ -102,24 +99,21 @@ public class JwtTokenProvider {
     /**
      * Validate a JWT token. Returns true if the token is well-formed, signed,
      * and not expired; false otherwise.
-     *
-     * @param token the JWT string
-     * @return true if valid
      */
     public boolean validateToken(String token) {
         try {
             parseClaims(token);
             return true;
         } catch (SignatureException e) {
-            logger.error("Invalid JWT signature: {}", e.getMessage());
+            log.error("Invalid JWT signature: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            logger.error("Malformed JWT token: {}", e.getMessage());
+            log.error("Malformed JWT token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            logger.error("Expired JWT token: {}", e.getMessage());
+            log.error("Expired JWT token: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            logger.error("Unsupported JWT token: {}", e.getMessage());
+            log.error("Unsupported JWT token: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            logger.error("JWT claims string is empty: {}", e.getMessage());
+            log.error("JWT claims string is empty: {}", e.getMessage());
         }
         return false;
     }

@@ -1,6 +1,7 @@
 package com.stocksimulator.simulation;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stocksimulator.config.AppProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,11 +40,13 @@ class InflationServiceTest {
 
     @BeforeEach
     void setUp() {
+        AppProperties appProperties = new AppProperties();
+
         lenient().when(webClientBuilder.baseUrl(anyString())).thenReturn(webClientBuilder);
         lenient().when(webClientBuilder.build()).thenReturn(webClient);
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
-        inflationService = new InflationService(webClientBuilder, redisTemplate, objectMapper);
+        inflationService = new InflationService(appProperties, webClientBuilder, redisTemplate, objectMapper);
     }
 
     // ── Existing tests ────────────────────────────────────────────────
@@ -92,13 +95,13 @@ class InflationServiceTest {
 
     @Test
     void constructor_constructsSuccessfully() {
+        AppProperties appProperties = new AppProperties();
         assertDoesNotThrow(() ->
-                new InflationService(webClientBuilder, redisTemplate, objectMapper));
+                new InflationService(appProperties, webClientBuilder, redisTemplate, objectMapper));
     }
 
     @Test
     void getCumulativeFactor_crossYear_usesCorrectCacheKey() {
-        // Simply verify the correct cache key is looked up for cross-year range
         when(valueOperations.get("inflation:2022:2023")).thenReturn(null);
 
         when(webClient.post()).thenThrow(new RuntimeException("Connection refused"));
@@ -130,7 +133,6 @@ class InflationServiceTest {
     void getCumulativeFactor_cacheMiss_fetchesFromBLS() {
         when(valueOperations.get("inflation:2023:2023")).thenReturn(null);
 
-        // Mock the full WebClient POST chain for BLS API call
         WebClient.RequestBodyUriSpec bodyUriSpec = mock(WebClient.RequestBodyUriSpec.class);
         WebClient.RequestBodySpec bodySpec = mock(WebClient.RequestBodySpec.class);
         WebClient.RequestHeadersSpec headersSpec = mock(WebClient.RequestHeadersSpec.class);

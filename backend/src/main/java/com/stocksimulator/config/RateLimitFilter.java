@@ -3,8 +3,7 @@ package com.stocksimulator.config;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -16,17 +15,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Simple rate limiter for auth endpoints.
- * Allows 10 requests per minute per IP for /api/auth/** paths.
+ * Configurable requests per minute per IP for /api/auth/** paths.
  */
 @Component
 @Order(1)
+@Slf4j
 public class RateLimitFilter implements Filter {
 
-    private static final Logger log = LoggerFactory.getLogger(RateLimitFilter.class);
-    private static final int MAX_REQUESTS_PER_MINUTE = 10;
-    private static final long WINDOW_MS = 60_000; // 1 minute
-
+    private final AppProperties appProperties;
     private final Map<String, RequestCounter> requestCounts = new ConcurrentHashMap<>();
+
+    public RateLimitFilter(AppProperties appProperties) {
+        this.appProperties = appProperties;
+    }
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
@@ -38,7 +39,10 @@ public class RateLimitFilter implements Filter {
         String path = httpRequest.getRequestURI();
         if (path.startsWith("/api/auth/")) {
             String clientIp = getClientIp(httpRequest);
-            RequestCounter counter = requestCounts.computeIfAbsent(clientIp, k -> new RequestCounter());
+            int maxRequests = appProperties.getRateLimit().getMaxRequestsPerMinute();
+            long windowMs = appProperties.getRateLimit().getWindowMs();
+            RequestCounter counter = requestCounts.computeIfAbsent(clientIp,
+                    k -> new RequestCounter(maxRequests, windowMs));
 
             if (counter.isRateLimited()) {
                 log.warn("Rate limit exceeded for IP {} on {}", clientIp, path);
@@ -64,6 +68,13 @@ public class RateLimitFilter implements Filter {
     private static class RequestCounter {
         private final AtomicInteger count = new AtomicInteger(0);
         private volatile long windowStart = System.currentTimeMillis();
+        private final int maxRequests;
+        private final long windowMs;
+
+        RequestCounter(int maxRequests, long windowMs) {
+            this.maxRequests = maxRequests;
+            this.windowMs = windowMs;
+        }
 
         void increment() {
             count.incrementAndGet();
@@ -71,13 +82,12 @@ public class RateLimitFilter implements Filter {
 
         boolean isRateLimited() {
             long now = System.currentTimeMillis();
-            if (now - windowStart > WINDOW_MS) {
-                // Reset window
+            if (now - windowStart > windowMs) {
                 windowStart = now;
                 count.set(0);
                 return false;
             }
-            return count.get() >= MAX_REQUESTS_PER_MINUTE;
+            return count.get() >= maxRequests;
         }
     }
 }

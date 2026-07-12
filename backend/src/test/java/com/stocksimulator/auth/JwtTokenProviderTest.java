@@ -19,28 +19,42 @@ class JwtTokenProviderTest {
 
     @Test
     void generateAccessToken_returnsNonEmptyToken() {
-        String token = jwtTokenProvider.generateAccessToken("testuser");
+        String token = jwtTokenProvider.generateAccessToken("testuser", 1L);
         assertNotNull(token);
         assertFalse(token.isEmpty());
     }
 
     @Test
     void generateRefreshToken_returnsNonEmptyToken() {
-        String token = jwtTokenProvider.generateRefreshToken("testuser");
+        String token = jwtTokenProvider.generateRefreshToken("testuser", 1L);
         assertNotNull(token);
         assertFalse(token.isEmpty());
     }
 
     @Test
     void getUsernameFromToken_returnsCorrectUsername() {
-        String token = jwtTokenProvider.generateAccessToken("alice");
+        String token = jwtTokenProvider.generateAccessToken("alice", 42L);
         String username = jwtTokenProvider.getUsernameFromToken(token);
         assertEquals("alice", username);
     }
 
     @Test
+    void getUserIdFromToken_returnsCorrectUserId() {
+        String token = jwtTokenProvider.generateAccessToken("alice", 42L);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        assertEquals(42L, userId);
+    }
+
+    @Test
+    void getUserIdFromToken_returnsCorrectUserIdForRefreshToken() {
+        String token = jwtTokenProvider.generateRefreshToken("bob", 99L);
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        assertEquals(99L, userId);
+    }
+
+    @Test
     void validateToken_returnsTrueForValidToken() {
-        String token = jwtTokenProvider.generateAccessToken("testuser");
+        String token = jwtTokenProvider.generateAccessToken("testuser", 1L);
         assertTrue(jwtTokenProvider.validateToken(token));
     }
 
@@ -56,7 +70,7 @@ class JwtTokenProviderTest {
 
     @Test
     void getExpirationFromToken_returnsDateInFuture() {
-        String token = jwtTokenProvider.generateAccessToken("testuser");
+        String token = jwtTokenProvider.generateAccessToken("testuser", 1L);
         var expiration = jwtTokenProvider.getExpirationFromToken(token);
         assertNotNull(expiration);
         assertTrue(expiration.after(new java.util.Date()));
@@ -64,8 +78,8 @@ class JwtTokenProviderTest {
 
     @Test
     void accessAndRefreshTokensHaveDifferentExpirations() {
-        String access = jwtTokenProvider.generateAccessToken("testuser");
-        String refresh = jwtTokenProvider.generateRefreshToken("testuser");
+        String access = jwtTokenProvider.generateAccessToken("testuser", 1L);
+        String refresh = jwtTokenProvider.generateRefreshToken("testuser", 1L);
 
         var accessExp = jwtTokenProvider.getExpirationFromToken(access);
         var refreshExp = jwtTokenProvider.getExpirationFromToken(refresh);
@@ -76,11 +90,9 @@ class JwtTokenProviderTest {
 
     @Test
     void validateToken_returnsFalseForExpiredToken() throws InterruptedException {
-        // Create a provider with 1ms expiration
         JwtTokenProvider shortLivedProvider = new JwtTokenProvider(TEST_SECRET, 1L, 1L);
-        String token = shortLivedProvider.generateAccessToken("testuser");
+        String token = shortLivedProvider.generateAccessToken("testuser", 1L);
 
-        // Wait for token to expire
         Thread.sleep(50);
 
         assertFalse(shortLivedProvider.validateToken(token),
@@ -91,7 +103,7 @@ class JwtTokenProviderTest {
     void validateToken_returnsFalseForTokenSignedWithDifferentSecret() {
         String otherSecret = "otherSecretKey123456789012345678901234";
         JwtTokenProvider otherProvider = new JwtTokenProvider(otherSecret, ACCESS_EXPIRATION, REFRESH_EXPIRATION);
-        String tokenFromOther = otherProvider.generateAccessToken("testuser");
+        String tokenFromOther = otherProvider.generateAccessToken("testuser", 1L);
 
         assertFalse(jwtTokenProvider.validateToken(tokenFromOther),
                 "Token signed with different secret should be invalid");
