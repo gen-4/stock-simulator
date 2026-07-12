@@ -8,19 +8,19 @@
   justify-content: center;
   align-items: center;
   height: 400px;
-  color: #999;
+  color: var(--color-text-light);
   font-size: 1.1rem;
 }
 
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: #e0e0e0;
+  stroke: var(--color-border);
 }
 
 .recharts-tooltip-wrapper {
-  background-color: white;
-  border: 1px solid #e0e0e0;
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 0.75rem 1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }

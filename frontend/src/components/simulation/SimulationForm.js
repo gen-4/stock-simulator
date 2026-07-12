@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { runSimulation, setDisplayMode, setInflationAdjusted } from '../../store/slices/simulationSlice';
-import '../styles/simulation.css';
+import { runSimulation, setDisplayMode, setInflationAdjusted } from '@/store/slices/simulationSlice';
+import '@/components/styles/simulation.css';
 
 const SimulationForm = ({ stock }) => {
   const dispatch = useDispatch();

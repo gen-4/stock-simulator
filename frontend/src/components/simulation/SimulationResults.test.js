@@ -2,14 +2,19 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import simulationReducer from '../../store/slices/simulationSlice';
+import simulationReducer from '@/store/slices/simulationSlice';
 import SimulationResults from './SimulationResults';
 
 // Mock StockChart to avoid recharts rendering complexity
-jest.mock('../charts/StockChart', () => {
-  return function MockStockChart({ data, displayMode, inflationAdjusted }) {
+jest.mock('@/components/charts/StockChart', () => {
+  return function MockStockChart({ data, displayMode, inflationAdjusted, investmentLabels }) {
     return (
-      <div data-testid="mock-stock-chart" data-mode={displayMode} data-inflation={String(inflationAdjusted)}>
+      <div
+        data-testid="mock-stock-chart"
+        data-mode={displayMode}
+        data-inflation={String(inflationAdjusted)}
+        data-labels={investmentLabels ? JSON.stringify(investmentLabels) : ''}
+      >
         Chart with {data?.length || 0} points
       </div>
     );
@@ -85,7 +90,8 @@ describe('SimulationResults', () => {
 
     it('renders positive gain with + prefix', () => {
       renderWithStore({ result: sampleResult, loading: false, error: null });
-      expect(screen.getByText(/+\$1,200/)).toBeInTheDocument();
+      const gainCard = screen.getByText('Total Gain/Loss').closest('.summary-card');
+      expect(gainCard.querySelector('.value').textContent).toBe('+1,200');
     });
 
     it('renders gain card with positive class when gain >= 0', () => {

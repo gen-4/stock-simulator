@@ -1,8 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './slices/authSlice';
-import marketReducer from './slices/marketSlice';
-import simulationReducer from './slices/simulationSlice';
-import portfolioReducer from './slices/portfolioSlice';
+import authReducer from '@/store/slices/authSlice';
+import marketReducer from '@/store/slices/marketSlice';
+import simulationReducer from '@/store/slices/simulationSlice';
+import portfolioReducer from '@/store/slices/portfolioSlice';
 
 const store = configureStore({
   reducer: {

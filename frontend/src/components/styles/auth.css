@@ -3,14 +3,14 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--gradient-primary);
 }
 
 .auth-card {
-  background: white;
+  background: var(--color-bg-card);
   padding: 2rem;
   border-radius: 10px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 400px;
 }
@@ -18,7 +18,7 @@
 .auth-card h2 {
   text-align: center;
   margin-bottom: 1.5rem;
-  color: #333;
+  color: var(--color-text-heading);
 }
 
 .form-group {
@@ -28,14 +28,14 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #555;
+  color: var(--color-text-label);
   font-weight: 500;
 }
 
 .form-group input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border-light);
   border-radius: 5px;
   font-size: 1rem;
   transition: border-color 0.3s;
@@ -43,18 +43,18 @@
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--color-primary);
 }
 
 .form-group input:disabled {
-  background-color: #f5f5f5;
+  background-color: var(--color-bg-disabled);
 }
 
 .auth-button {
   width: 100%;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--gradient-primary);
+  color: var(--color-bg-card);
   border: none;
   border-radius: 5px;
   font-size: 1rem;
@@ -65,7 +65,7 @@
 
 .auth-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-button-hover);
 }
 
 .auth-button:disabled {
@@ -76,11 +76,11 @@
 .auth-link {
   text-align: center;
   margin-top: 1rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .auth-link a {
-  color: #667eea;
+  color: var(--color-primary);
   text-decoration: none;
   font-weight: 500;
 }
@@ -90,13 +90,13 @@
 }
 
 .error-message {
-  background-color: #fee;
-  color: #c00;
+  background-color: var(--color-error-bg);
+  color: var(--color-error-text);
   padding: 0.75rem;
   border-radius: 5px;
   margin-bottom: 1rem;
   text-align: center;
-  border: 1px solid #fcc;
+  border: 1px solid var(--color-error-border);
 }
 
 .loading {
@@ -105,5 +105,5 @@
   align-items: center;
   height: 100vh;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }

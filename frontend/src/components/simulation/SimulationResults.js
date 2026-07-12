@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import StockChart from '../charts/StockChart';
-import '../styles/simulation.css';
+import StockChart from '@/components/charts/StockChart';
+import '@/components/styles/simulation.css';
 
 const SimulationResults = () => {
   const { result, loading, error } = useSelector(state => state.simulation);
@@ -57,6 +57,7 @@ const SimulationResults = () => {
           data={result.dataPoints}
           displayMode={result.displayMode}
           inflationAdjusted={result.inflationAdjusted}
+          investmentLabels={result.investmentLabels}
         />
       </div>
     </div>

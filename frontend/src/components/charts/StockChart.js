@@ -10,29 +10,33 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import '../styles/charts.css';
+import '@/components/styles/charts.css';
 
-const StockChart = ({ data, displayMode, inflationAdjusted }) => {
-  // Transform data for per_investment mode: compute perInvestmentValue
+const INVESTMENT_COLORS = [
+  '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a4de6c',
+  '#d0ed57', '#83a6ed', '#8dd1e1', '#ff6b6b', '#c9b1ff',
+];
+
+const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) => {
+  // Transform data for per_investment mode: flatten perInvestmentValues array into named keys
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return data;
     if (displayMode !== 'per_investment') return data;
 
-    let investmentCount = 0;
-    let lastInvested = null;
+    const numInvestments = investmentLabels ? investmentLabels.length : 0;
+    if (numInvestments === 0) return data;
+
     return data.map((point) => {
-      if (lastInvested === null || point.totalInvested !== lastInvested) {
-        investmentCount++;
-        lastInvested = point.totalInvested;
+      const transformed = { ...point };
+      const perInvValues = point.perInvestmentValues;
+      if (perInvValues && Array.isArray(perInvValues)) {
+        for (let i = 0; i < numInvestments; i++) {
+          transformed[`inv_${i}`] = perInvValues[i] != null ? perInvValues[i] : undefined;
+        }
       }
-      return {
-        ...point,
-        perInvestmentValue: investmentCount > 0
-          ? point.portfolioValue / investmentCount
-          : 0,
-      };
+      return transformed;
     });
-  }, [data, displayMode]);
+  }, [data, displayMode, investmentLabels]);
 
   if (!data || data.length === 0) {
     return <div className="no-data">No data available for chart</div>;
@@ -90,6 +94,9 @@ const StockChart = ({ data, displayMode, inflationAdjusted }) => {
     }
   };
 
+  const numInvestments = investmentLabels ? investmentLabels.length : 0;
+  const hasPerInvestmentData = displayMode === 'per_investment' && numInvestments > 0;
+
   return (
     <div className="stock-chart">
       <ResponsiveContainer width="100%" height={400}>
@@ -110,8 +117,7 @@ const StockChart = ({ data, displayMode, inflationAdjusted }) => {
           />
           <Legend />
           
-          {/* Total Invested line — hidden for percentage mode */}
-          {displayMode !== 'percentage' && (
+          {!hasPerInvestmentData && displayMode !== 'percentage' && (
             <Line
               type="monotone"
               dataKey="totalInvested"
@@ -122,18 +128,32 @@ const StockChart = ({ data, displayMode, inflationAdjusted }) => {
             />
           )}
           
-          {/* Primary line (mode-specific) */}
-          <Line
-            type="monotone"
-            dataKey={getPrimaryDataKey()}
-            stroke={getPrimaryColor()}
-            name={getPrimaryName()}
-            dot={false}
-            strokeWidth={2}
-          />
+          {hasPerInvestmentData ? (
+            // Render one Line per investment
+            investmentLabels.map((label, i) => (
+              <Line
+                key={`inv_${i}`}
+                type="monotone"
+                dataKey={`inv_${i}`}
+                stroke={INVESTMENT_COLORS[i % INVESTMENT_COLORS.length]}
+                name={label}
+                dot={false}
+                strokeWidth={2}
+                connectNulls={false}
+              />
+            ))
+          ) : (
+            <Line
+              type="monotone"
+              dataKey={getPrimaryDataKey()}
+              stroke={getPrimaryColor()}
+              name={getPrimaryName()}
+              dot={false}
+              strokeWidth={2}
+            />
+          )}
           
-          {/* Inflation-adjusted line — dashed orange, shown when checkbox is on and not in percentage mode */}
-          {inflationAdjusted && displayMode !== 'percentage' && (
+          {inflationAdjusted && displayMode !== 'percentage' && !hasPerInvestmentData && (
             <Line
               type="monotone"
               dataKey="inflationAdjustedValue"
@@ -145,7 +165,6 @@ const StockChart = ({ data, displayMode, inflationAdjusted }) => {
             />
           )}
           
-          {/* Zero reference line for percentage mode */}
           {displayMode === 'percentage' && (
             <ReferenceLine y={0} stroke="#666" strokeDasharray="3 3" />
           )}

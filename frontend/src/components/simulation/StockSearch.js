@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { searchStocks, getStockQuote, clearSearchResults } from '../../store/slices/marketSlice';
-import '../styles/simulation.css';
+import { searchStocks, getStockQuote, clearSearchResults } from '@/store/slices/marketSlice';
+import '@/components/styles/simulation.css';
 
 const StockSearch = ({ onSelectStock }) => {
   const [query, setQuery] = useState('');

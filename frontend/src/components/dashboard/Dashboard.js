@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../../store/slices/authSlice';
-import StockSearch from '../simulation/StockSearch';
-import SimulationForm from '../simulation/SimulationForm';
-import SimulationResults from '../simulation/SimulationResults';
-import '../styles/dashboard.css';
+import { logout } from '@/store/slices/authSlice';
+import StockSearch from '@/components/simulation/StockSearch';
+import SimulationForm from '@/components/simulation/SimulationForm';
+import SimulationResults from '@/components/simulation/SimulationResults';
+import '@/components/styles/dashboard.css';
 
 const Dashboard = () => {
   const dispatch = useDispatch();

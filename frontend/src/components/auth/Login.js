@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { login, clearError } from '../../store/slices/authSlice';
-import '../styles/auth.css';
+import { login, clearError } from '@/store/slices/authSlice';
+import '@/components/styles/auth.css';
 
 const Login = () => {
   const [formData, setFormData] = useState({
