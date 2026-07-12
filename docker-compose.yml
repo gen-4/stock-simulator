@@ -53,7 +53,6 @@ services:
       SPRING_DATA_REDIS_PORT: 6379
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET}
-      FRONTEND_URL: https://cronushub.ddns.net
     networks:
       - stock_network
 
