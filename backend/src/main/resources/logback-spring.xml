@@ -22,7 +22,7 @@
         </encoder>
     </appender>
 
-    <!-- Dev profile: console only -->
+    <!-- Dev profile -->
     <springProfile name="dev">
         <root level="INFO">
             <appender-ref ref="CONSOLE" />
@@ -31,7 +31,7 @@
         <logger name="org.springframework.security" level="DEBUG" />
     </springProfile>
 
-    <!-- Test profile: console only -->
+    <!-- Test profile -->
     <springProfile name="test">
         <root level="INFO">
             <appender-ref ref="CONSOLE" />

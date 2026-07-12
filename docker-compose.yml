@@ -54,8 +54,6 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD:-changeme}
       JWT_SECRET: ${JWT_SECRET}
       FRONTEND_URL: https://cronushub.ddns.net
-    volumes:
-      - backend_logs:/var/log/stock_simulator
     networks:
       - stock_network
 
@@ -76,7 +74,6 @@ services:
 volumes:
   pgdata:
   redisdata:
-  backend_logs:
 
 networks:
   stock_network:
