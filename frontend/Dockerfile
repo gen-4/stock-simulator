@@ -1,7 +1,6 @@
 # Build stage
 FROM node:18-alpine AS build
-ARG PUBLIC_URL=.
-ARG REACT_APP_API_URL=http://localhost:8080/api
+ARG VITE_API_URL=http://localhost:8080/api
 WORKDIR /app
 COPY package*.json ./
 RUN npm install

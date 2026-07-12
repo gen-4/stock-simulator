@@ -1,12 +1,13 @@
+import { vi } from 'vitest';
 import marketReducer, {
   clearSearchResults,
   clearHistoricalPrices,
 } from './marketSlice';
 
 // Mock the api module
-jest.mock('../../api/api', () => ({
-  post: jest.fn(),
-  get: jest.fn(),
+vi.mock('../../api/api', () => ({
+  post: vi.fn(),
+  get: vi.fn(),
 }));
 
 describe('marketSlice', () => {

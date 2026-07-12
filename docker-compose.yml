@@ -63,8 +63,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        PUBLIC_URL: /stock-simulator
-        REACT_APP_API_URL: https://cronushub.ddns.net/stock-simulator-api/api
+        VITE_API_URL: https://cronushub.ddns.net/stock-simulator-api/api
     container_name: stock_simulator_frontend
     ports:
       - "3000:80"

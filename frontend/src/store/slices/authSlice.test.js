@@ -1,22 +1,23 @@
+import { vi } from 'vitest';
 import authReducer, {
   clearError,
   setCredentials,
 } from './authSlice';
 
 // Mock the api module
-jest.mock('../../api/api', () => ({
-  post: jest.fn(),
-  get: jest.fn(),
+vi.mock('../../api/api', () => ({
+  post: vi.fn(),
+  get: vi.fn(),
 }));
 
 // Mock localStorage
 const localStorageMock = (() => {
   let store = {};
   return {
-    getItem: jest.fn((key) => store[key] || null),
-    setItem: jest.fn((key, value) => { store[key] = value; }),
-    removeItem: jest.fn((key) => { delete store[key]; }),
-    clear: jest.fn(() => { store = {}; }),
+    getItem: vi.fn((key) => store[key] || null),
+    setItem: vi.fn((key, value) => { store[key] = value; }),
+    removeItem: vi.fn((key) => { delete store[key]; }),
+    clear: vi.fn(() => { store = {}; }),
   };
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
@@ -24,7 +25,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 describe('authSlice', () => {
   beforeEach(() => {
     localStorageMock.clear();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('initial state', () => {

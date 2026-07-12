@@ -2,9 +2,11 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import StockChart from './StockChart';
 
+import { vi } from 'vitest';
+
 // Mock recharts to inspect component props without rendering SVG
-jest.mock('recharts', () => {
-  const OriginalModule = jest.requireActual('recharts');
+vi.mock('recharts', async (importOriginal) => {
+  const OriginalModule = await importOriginal();
   return {
     ...OriginalModule,
     ResponsiveContainer: ({ children }) => <div data-testid="responsive-container">{children}</div>,

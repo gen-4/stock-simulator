@@ -5,9 +5,11 @@ import { configureStore } from '@reduxjs/toolkit';
 import simulationReducer from '@/store/slices/simulationSlice';
 import SimulationResults from './SimulationResults';
 
+import { vi } from 'vitest';
+
 // Mock StockChart to avoid recharts rendering complexity
-jest.mock('@/components/charts/StockChart', () => {
-  return function MockStockChart({ data, displayMode, inflationAdjusted, investmentLabels }) {
+vi.mock('@/components/charts/StockChart', () => ({
+  default: function MockStockChart({ data, displayMode, inflationAdjusted, investmentLabels }) {
     return (
       <div
         data-testid="mock-stock-chart"
@@ -18,8 +20,8 @@ jest.mock('@/components/charts/StockChart', () => {
         Chart with {data?.length || 0} points
       </div>
     );
-  };
-});
+  },
+}));
 
 const createMockStore = (simulationState) =>
   configureStore({

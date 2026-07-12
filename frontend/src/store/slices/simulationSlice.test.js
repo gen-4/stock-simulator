@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import simulationReducer, {
   setDisplayMode,
   setInflationAdjusted,
@@ -5,9 +6,9 @@ import simulationReducer, {
 } from './simulationSlice';
 
 // Mock the api module
-jest.mock('../../api/api', () => ({
-  post: jest.fn(),
-  get: jest.fn(),
+vi.mock('../../api/api', () => ({
+  post: vi.fn(),
+  get: vi.fn(),
 }));
 
 describe('simulationSlice', () => {
