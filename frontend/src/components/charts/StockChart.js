@@ -34,6 +34,12 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
           transformed[`inv_${i}`] = perInvValues[i] != null ? perInvValues[i] : undefined;
         }
       }
+      const infPerInvValues = point.inflationAdjustedPerInvestmentValues;
+      if (infPerInvValues && Array.isArray(infPerInvValues)) {
+        for (let i = 0; i < numInvestments; i++) {
+          transformed[`inflationInv_${i}`] = infPerInvValues[i] != null ? infPerInvValues[i] : undefined;
+        }
+      }
       return transformed;
     });
   }, [data, displayMode, investmentLabels]);
@@ -120,7 +126,7 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
           />
           <Legend />
           
-          {!hasPerInvestmentData && displayMode !== 'percentage' && (
+          {!hasPerInvestmentData && displayMode !== 'percentage' && displayMode !== 'nominal' && (
             <Line
               type="monotone"
               dataKey="totalInvested"
@@ -132,18 +138,31 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
           )}
           
           {hasPerInvestmentData ? (
-            // Render one Line per investment
+            // Render one Line per investment + optional inflation-adjusted counterpart
             investmentLabels.map((label, i) => (
-              <Line
-                key={`inv_${i}`}
-                type="monotone"
-                dataKey={`inv_${i}`}
-                stroke={INVESTMENT_COLORS[i % INVESTMENT_COLORS.length]}
-                name={label}
-                dot={false}
-                strokeWidth={2}
-                connectNulls={false}
-              />
+              <React.Fragment key={`inv-group-${i}`}>
+                <Line
+                  type="monotone"
+                  dataKey={`inv_${i}`}
+                  stroke={INVESTMENT_COLORS[i % INVESTMENT_COLORS.length]}
+                  name={label}
+                  dot={false}
+                  strokeWidth={2}
+                  connectNulls={false}
+                />
+                {inflationAdjusted && (
+                  <Line
+                    type="monotone"
+                    dataKey={`inflationInv_${i}`}
+                    stroke={INVESTMENT_COLORS[i % INVESTMENT_COLORS.length]}
+                    name={`${label} (inflation-adj.)`}
+                    dot={false}
+                    strokeWidth={2}
+                    strokeDasharray="8 4"
+                    connectNulls={false}
+                  />
+                )}
+              </React.Fragment>
             ))
           ) : (
             <Line

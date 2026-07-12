@@ -27,4 +27,6 @@ public class SimulationDataPoint {
     private Double inflationAdjustedValue;
 
     private List<Double> perInvestmentValues;
+
+    private List<Double> inflationAdjustedPerInvestmentValues;
 }

@@ -106,19 +106,6 @@ public class SimulationService {
                     nextInvestmentIdx++;
                 }
 
-                // Compute per-investment values (only when needed)
-                List<Double> perInvestmentValues = null;
-                if ("per_investment".equals(displayMode)) {
-                    perInvestmentValues = new ArrayList<>(investmentCount);
-                    for (int i = 0; i < investmentCount; i++) {
-                        if (sharesPerInvestment[i] > 0) {
-                            perInvestmentValues.add(sharesPerInvestment[i] * priceOnDay);
-                        } else {
-                            perInvestmentValues.add(null);
-                        }
-                    }
-                }
-
                 // Compute portfolio totals
                 double portfolioValue = 0.0;
                 for (int i = 0; i < investmentCount; i++) {
@@ -127,14 +114,40 @@ public class SimulationService {
                 double gain = portfolioValue - totalInvested;
                 double gainPercent = totalInvested > 0 ? (gain / totalInvested) * 100.0 : 0.0;
 
+                // Inflation adjustment (portfolio-level)
                 Double inflationAdjustedValue = null;
+                Double cpiFactor = null;
                 if (inflationAdjusted && totalInvested > 0) {
                     try {
-                        double cpiFactor = inflationService.getCumulativeFactor(earliestDate, currentDate);
+                        cpiFactor = inflationService.getCumulativeFactor(earliestDate, currentDate);
                         inflationAdjustedValue = portfolioValue / cpiFactor;
                     } catch (Exception e) {
                         log.warn("Failed to get inflation factor for {}: {}", currentDate, e.getMessage());
                         inflationAdjustedValue = null;
+                    }
+                }
+
+                // Compute per-investment values (only when needed)
+                List<Double> perInvestmentValues = null;
+                List<Double> inflationAdjustedPerInvestmentValues = null;
+                if ("per_investment".equals(displayMode)) {
+                    perInvestmentValues = new ArrayList<>(investmentCount);
+                    if (cpiFactor != null) {
+                        inflationAdjustedPerInvestmentValues = new ArrayList<>(investmentCount);
+                    }
+                    for (int i = 0; i < investmentCount; i++) {
+                        if (sharesPerInvestment[i] > 0) {
+                            double value = sharesPerInvestment[i] * priceOnDay;
+                            perInvestmentValues.add(value);
+                            if (inflationAdjustedPerInvestmentValues != null) {
+                                inflationAdjustedPerInvestmentValues.add(value / cpiFactor);
+                            }
+                        } else {
+                            perInvestmentValues.add(null);
+                            if (inflationAdjustedPerInvestmentValues != null) {
+                                inflationAdjustedPerInvestmentValues.add(null);
+                            }
+                        }
                     }
                 }
 
@@ -146,6 +159,7 @@ public class SimulationService {
                     .gainPercent(gainPercent)
                     .inflationAdjustedValue(inflationAdjustedValue)
                     .perInvestmentValues(perInvestmentValues)
+                    .inflationAdjustedPerInvestmentValues(inflationAdjustedPerInvestmentValues)
                     .build();
 
                 dataPoints.add(dataPoint);
