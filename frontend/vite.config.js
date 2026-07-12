@@ -15,6 +15,7 @@ export default defineConfig({
     exclude: [],
   },
   optimizeDeps: {
+    include: ['recharts'],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',
