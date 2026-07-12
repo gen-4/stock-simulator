@@ -18,8 +18,8 @@ async function request(endpoint, options = {}) {
 
   const response = await fetch(url, config);
 
-  // Handle 401 - try refresh token
-  if (response.status === 401 && !options._retry) {
+  // Handle 401/403 - try refresh token
+  if ((response.status === 401 || response.status === 403) && !options._retry) {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
       try {
