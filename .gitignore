@@ -51,6 +51,7 @@ out/
 .vscode/
 *.code-workspace
 history/
+.metals/
 
 # ========================
 # IDE — Eclipse
