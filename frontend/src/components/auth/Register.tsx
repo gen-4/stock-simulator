@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { register, clearError } from '@/store/slices/authSlice';
+import type { RootState } from '@/store';
 import '@/components/styles/auth.css';
 
 const Register = () => {
@@ -14,7 +15,7 @@ const Register = () => {
   const [passwordError, setPasswordError] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector(state => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -28,7 +29,7 @@ const Register = () => {
     };
   }, [dispatch]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -36,7 +37,7 @@ const Register = () => {
     setPasswordError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       setPasswordError('Passwords do not match');

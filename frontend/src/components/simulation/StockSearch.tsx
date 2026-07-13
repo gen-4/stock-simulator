@@ -1,13 +1,19 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { searchStocks, getStockQuote, clearSearchResults } from '@/store/slices/marketSlice';
+import type { RootState } from '@/store';
+import type { SearchResult } from '@/types';
 import '@/components/styles/simulation.css';
 
-const StockSearch = ({ onSelectStock }) => {
+interface StockSearchProps {
+  onSelectStock: (stock: SearchResult) => void;
+}
+
+const StockSearch = ({ onSelectStock }: StockSearchProps) => {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const dispatch = useDispatch();
-  const { searchResults, loading } = useSelector(state => state.market);
+  const { searchResults, loading } = useSelector((state: RootState) => state.market);
 
   // Debounce search query
   useEffect(() => {
@@ -25,7 +31,7 @@ const StockSearch = ({ onSelectStock }) => {
     }
   }, [debouncedQuery, dispatch]);
 
-  const handleSelectStock = (stock) => {
+  const handleSelectStock = (stock: SearchResult) => {
     onSelectStock(stock);
     dispatch(getStockQuote(stock.symbol));
     setQuery('');

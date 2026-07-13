@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '@/store/slices/authSlice';
+import type { RootState } from '@/store';
+import type { SearchResult } from '@/types';
 import StockSearch from '@/components/simulation/StockSearch';
 import SimulationForm from '@/components/simulation/SimulationForm';
 import SimulationResults from '@/components/simulation/SimulationResults';
@@ -8,8 +10,8 @@ import '@/components/styles/dashboard.css';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector(state => state.auth);
-  const [selectedStock, setSelectedStock] = useState(null);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [selectedStock, setSelectedStock] = useState<SearchResult | null>(null);
 
   const handleLogout = () => {
     dispatch(logout());

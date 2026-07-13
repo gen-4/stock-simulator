@@ -10,14 +10,26 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
+import type { SimulationDataPoint } from '@/types';
 import '@/components/styles/charts.css';
+
+interface StockChartProps {
+  data: SimulationDataPoint[] | null;
+  displayMode: string;
+  inflationAdjusted?: boolean;
+  investmentLabels?: string[];
+}
 
 const INVESTMENT_COLORS = [
   '#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#a4de6c',
   '#d0ed57', '#83a6ed', '#8dd1e1', '#ff6b6b', '#c9b1ff',
 ];
 
-const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) => {
+interface ChartDataPoint extends SimulationDataPoint {
+  [key: string]: unknown;
+}
+
+const StockChart = ({ data, displayMode, inflationAdjusted = false, investmentLabels = [] }: StockChartProps) => {
   // Transform data for per_investment mode: flatten perInvestmentValues array into named keys
   const chartData = useMemo(() => {
     if (!data || data.length === 0) return data;
@@ -26,8 +38,8 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
     const numInvestments = investmentLabels ? investmentLabels.length : 0;
     if (numInvestments === 0) return data;
 
-    return data.map((point) => {
-      const transformed = { ...point };
+    return data.map((point: SimulationDataPoint) => {
+      const transformed: ChartDataPoint = { ...point };
       const perInvValues = point.perInvestmentValues;
       if (perInvValues && Array.isArray(perInvValues)) {
         for (let i = 0; i < numInvestments; i++) {
@@ -48,18 +60,18 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
     return <div className="no-data">No data available for chart</div>;
   }
 
-  const formatYAxis = (value) => {
+  const formatYAxis = (value: number) => {
     if (displayMode === 'percentage') {
       return `${value.toFixed(1)}%`;
     }
     return `$${value.toLocaleString()}`;
   };
 
-  const formatTooltip = (value, name) => {
+  const formatTooltip = (value: number | string, name: string) => {
     if (displayMode === 'percentage') {
-      return [`${value.toFixed(2)}%`, name];
+      return [`${Number(value).toFixed(2)}%`, name];
     }
-    return [`$${value.toLocaleString()}`, name];
+    return [`$${Number(value).toLocaleString()}`, name];
   };
 
   const getPrimaryColor = () => {
@@ -109,20 +121,20 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
   return (
     <div className="stock-chart">
       <ResponsiveContainer width="100%" height={400}>
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+        <LineChart data={chartData as unknown as Record<string, unknown>[]} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis 
             dataKey="date" 
             tick={{ fontSize: 12 }}
-            tickFormatter={(date) => new Date(date).toLocaleDateString()}
+            tickFormatter={(date: string) => new Date(date).toLocaleDateString()}
           />
           <YAxis 
             tickFormatter={formatYAxis}
             tick={{ fontSize: 12 }}
           />
           <Tooltip 
-            formatter={formatTooltip}
-            labelFormatter={(label) => new Date(label).toLocaleDateString()}
+            formatter={formatTooltip as unknown as (value: unknown, name: unknown, props: unknown) => [string, string]}
+            labelFormatter={(label: string) => new Date(label).toLocaleDateString()}
           />
           <Legend />
           
@@ -138,7 +150,6 @@ const StockChart = ({ data, displayMode, inflationAdjusted, investmentLabels }) 
           )}
           
           {hasPerInvestmentData ? (
-            // Render one Line per investment + optional inflation-adjusted counterpart
             investmentLabels.map((label, i) => (
               <React.Fragment key={`inv-group-${i}`}>
                 <Line

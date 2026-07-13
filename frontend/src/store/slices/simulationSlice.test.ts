@@ -51,7 +51,6 @@ describe('simulationSlice', () => {
   });
 
   describe('runSimulation async thunk', () => {
-    // Simulate pending action
     it('pending sets loading true and clears error', () => {
       const action = { type: 'simulation/runSimulation/pending' };
       const state = simulationReducer({ ...initialState, error: 'old error' }, action);
@@ -59,7 +58,6 @@ describe('simulationSlice', () => {
       expect(state.error).toBeNull();
     });
 
-    // Simulate fulfilled action
     it('fulfilled sets result and loading false', () => {
       const payload = { symbol: 'AAPL', totalInvested: 1000, dataPoints: [] };
       const action = { type: 'simulation/runSimulation/fulfilled', payload };
@@ -68,7 +66,6 @@ describe('simulationSlice', () => {
       expect(state.result).toEqual(payload);
     });
 
-    // Simulate rejected action
     it('rejected sets error and loading false', () => {
       const action = { type: 'simulation/runSimulation/rejected', payload: 'Simulation failed' };
       const state = simulationReducer({ ...initialState, loading: true }, action);

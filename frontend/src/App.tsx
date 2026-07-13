@@ -1,13 +1,14 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import Login from '@/components/auth/Login';
 import Register from '@/components/auth/Register';
 import Dashboard from '@/components/dashboard/Dashboard';
 import PrivateRoute from '@/components/common/PrivateRoute';
 
 function App() {
-  const { isAuthenticated } = useSelector(state => state.auth);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   return (
     <div className="App">

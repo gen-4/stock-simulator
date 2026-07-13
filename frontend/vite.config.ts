@@ -10,19 +10,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  esbuild: {
-    loader: 'jsx',
-    include: /src\/.*\.js$/,
-    exclude: [],
-  },
-  optimizeDeps: {
-    include: ['recharts'],
-    esbuildOptions: {
-      loader: {
-        '.js': 'jsx',
-      },
-    },
-  },
   server: {
     port: 3000,
   },
@@ -32,6 +19,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./src/setupTests.js'],
+    setupFiles: ['./src/setupTests.ts'],
   },
 });

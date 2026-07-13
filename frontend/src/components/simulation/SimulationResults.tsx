@@ -1,10 +1,11 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import type { RootState } from '@/store';
 import StockChart from '@/components/charts/StockChart';
 import '@/components/styles/simulation.css';
 
 const SimulationResults = () => {
-  const { result, loading, error } = useSelector(state => state.simulation);
+  const { result, loading, error } = useSelector((state: RootState) => state.simulation);
 
   if (loading) {
     return <div className="loading-results">Running simulation...</div>;

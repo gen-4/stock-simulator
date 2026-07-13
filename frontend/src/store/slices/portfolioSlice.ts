@@ -1,4 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
+import type { PortfolioState } from '@/types';
 
 const portfolioSlice = createSlice({
   name: 'portfolio',
@@ -8,13 +9,8 @@ const portfolioSlice = createSlice({
     transactions: [],
     loading: false,
     error: null,
-  },
-  reducers: {
-    setCurrentPortfolio: (state, action) => {
-      state.currentPortfolio = action.payload;
-    },
-  },
+  } as PortfolioState,
+  reducers: {},
 });
 
-export const { setCurrentPortfolio } = portfolioSlice.actions;
 export default portfolioSlice.reducer;

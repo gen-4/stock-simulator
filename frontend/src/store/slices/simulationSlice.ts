@@ -1,21 +1,23 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import api from '@/api/api';
+import type { SimulationState, SimulationResult, SimulationRequest } from '@/types';
 
-export const runSimulation = createAsyncThunk(
-  'simulation/runSimulation',
-  async (simulationData, { rejectWithValue }) => {
-    try {
-      const response = await api.post('/simulation/simulate', simulationData);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Simulation failed' }));
-        return rejectWithValue(error.message || 'Simulation failed');
-      }
-      return await response.json();
-    } catch (error) {
+export const runSimulation = createAsyncThunk<
+  SimulationResult,
+  SimulationRequest,
+  { rejectValue: string }
+>('simulation/runSimulation', async (simulationData, { rejectWithValue }) => {
+  try {
+    const response = await api.post('/simulation/simulate', simulationData);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Simulation failed' }));
       return rejectWithValue(error.message || 'Simulation failed');
     }
+    return await response.json();
+  } catch (error) {
+    return rejectWithValue((error as Error).message || 'Simulation failed');
   }
-);
+});
 
 const simulationSlice = createSlice({
   name: 'simulation',
@@ -25,12 +27,12 @@ const simulationSlice = createSlice({
     error: null,
     displayMode: 'accumulated',
     inflationAdjusted: false,
-  },
+  } as SimulationState,
   reducers: {
-    setDisplayMode: (state, action) => {
+    setDisplayMode: (state, action: PayloadAction<string>) => {
       state.displayMode = action.payload;
     },
-    setInflationAdjusted: (state, action) => {
+    setInflationAdjusted: (state, action: PayloadAction<boolean>) => {
       state.inflationAdjusted = action.payload;
     },
     clearSimulation: (state) => {

@@ -1,55 +1,59 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import api from '@/api/api';
+import type { MarketState, SearchResult, StockQuote, HistoricalPrice } from '@/types';
 
-export const searchStocks = createAsyncThunk(
-  'market/searchStocks',
-  async (query, { rejectWithValue }) => {
-    try {
-      const response = await api.get(`/market/search?q=${encodeURIComponent(query)}`);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Search failed' }));
-        return rejectWithValue(error.message || 'Search failed');
-      }
-      return await response.json();
-    } catch (error) {
+export const searchStocks = createAsyncThunk<
+  SearchResult[],
+  string,
+  { rejectValue: string }
+>('market/searchStocks', async (query, { rejectWithValue }) => {
+  try {
+    const response = await api.get(`/market/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Search failed' }));
       return rejectWithValue(error.message || 'Search failed');
     }
+    return await response.json();
+  } catch (error) {
+    return rejectWithValue((error as Error).message || 'Search failed');
   }
-);
+});
 
-export const getStockQuote = createAsyncThunk(
-  'market/getStockQuote',
-  async (symbol, { rejectWithValue }) => {
-    try {
-      const response = await api.get(`/market/quote/${encodeURIComponent(symbol)}`);
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Failed to get quote' }));
-        return rejectWithValue(error.message || 'Failed to get quote');
-      }
-      return await response.json();
-    } catch (error) {
+export const getStockQuote = createAsyncThunk<
+  StockQuote,
+  string,
+  { rejectValue: string }
+>('market/getStockQuote', async (symbol, { rejectWithValue }) => {
+  try {
+    const response = await api.get(`/market/quote/${encodeURIComponent(symbol)}`);
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to get quote' }));
       return rejectWithValue(error.message || 'Failed to get quote');
     }
+    return await response.json();
+  } catch (error) {
+    return rejectWithValue((error as Error).message || 'Failed to get quote');
   }
-);
+});
 
-export const getHistoricalPrices = createAsyncThunk(
-  'market/getHistoricalPrices',
-  async ({ symbol, startDate, endDate }, { rejectWithValue }) => {
-    try {
-      const response = await api.get(
-        `/market/historical/${encodeURIComponent(symbol)}?startDate=${startDate}&endDate=${endDate}`
-      );
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'Failed to get historical data' }));
-        return rejectWithValue(error.message || 'Failed to get historical data');
-      }
-      return await response.json();
-    } catch (error) {
+export const getHistoricalPrices = createAsyncThunk<
+  HistoricalPrice[],
+  { symbol: string; startDate: string; endDate: string },
+  { rejectValue: string }
+>('market/getHistoricalPrices', async ({ symbol, startDate, endDate }, { rejectWithValue }) => {
+  try {
+    const response = await api.get(
+      `/market/historical/${encodeURIComponent(symbol)}?startDate=${startDate}&endDate=${endDate}`
+    );
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Failed to get historical data' }));
       return rejectWithValue(error.message || 'Failed to get historical data');
     }
+    return await response.json();
+  } catch (error) {
+    return rejectWithValue((error as Error).message || 'Failed to get historical data');
   }
-);
+});
 
 const marketSlice = createSlice({
   name: 'market',
@@ -59,7 +63,7 @@ const marketSlice = createSlice({
     historicalPrices: [],
     loading: false,
     error: null,
-  },
+  } as MarketState,
   reducers: {
     clearSearchResults: (state) => {
       state.searchResults = [];

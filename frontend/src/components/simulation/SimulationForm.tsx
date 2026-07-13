@@ -1,13 +1,24 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { runSimulation, setDisplayMode, setInflationAdjusted } from '@/store/slices/simulationSlice';
+import type { RootState } from '@/store';
+import type { SearchResult, SimulationRequest } from '@/types';
 import '@/components/styles/simulation.css';
 
-const SimulationForm = ({ stock }) => {
+interface SimulationFormProps {
+  stock: SearchResult;
+}
+
+interface InvestmentEntry {
+  amount: string;
+  date: string;
+}
+
+const SimulationForm = ({ stock }: SimulationFormProps) => {
   const dispatch = useDispatch();
-  const { displayMode, inflationAdjusted } = useSelector(state => state.simulation);
+  const { displayMode, inflationAdjusted } = useSelector((state: RootState) => state.simulation);
   
-  const [investments, setInvestments] = useState([
+  const [investments, setInvestments] = useState<InvestmentEntry[]>([
     { amount: '', date: '' }
   ]);
   const [endDate, setEndDate] = useState('');
@@ -16,23 +27,23 @@ const SimulationForm = ({ stock }) => {
     setInvestments([...investments, { amount: '', date: '' }]);
   };
 
-  const removeInvestment = (index) => {
+  const removeInvestment = (index: number) => {
     if (investments.length > 1) {
       setInvestments(investments.filter((_, i) => i !== index));
     }
   };
 
-  const updateInvestment = (index, field, value) => {
+  const updateInvestment = (index: number, field: keyof InvestmentEntry, value: string) => {
     const updated = investments.map((inv, i) => 
       i === index ? { ...inv, [field]: value } : inv
     );
     setInvestments(updated);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    const simulationData = {
+    const simulationData: SimulationRequest = {
       symbol: stock.symbol,
       investments: investments.map(inv => ({
         amount: parseFloat(inv.amount),

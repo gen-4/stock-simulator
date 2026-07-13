@@ -5,16 +5,16 @@ import StockChart from './StockChart';
 import { vi } from 'vitest';
 
 // Mock recharts to inspect component props without rendering SVG
-vi.mock('recharts', async (importOriginal) => {
+vi.mock('recharts', async (importOriginal: () => Promise<object>) => {
   const OriginalModule = await importOriginal();
   return {
     ...OriginalModule,
-    ResponsiveContainer: ({ children }) => <div data-testid="responsive-container">{children}</div>,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-container">{children}</div>,
   };
 });
 
 // Helper to create sample data points
-const makeDataPoints = (overrides = {}) => [
+const makeDataPoints = (overrides: Record<string, unknown> = {}) => [
   { date: '2023-01-03', portfolioValue: 1000, totalInvested: 1000, gain: 0, gainPercent: 0, inflationAdjustedValue: 990, ...overrides },
   { date: '2023-01-04', portfolioValue: 1050, totalInvested: 1000, gain: 50, gainPercent: 5, inflationAdjustedValue: 1035, ...overrides },
   { date: '2023-01-05', portfolioValue: 1100, totalInvested: 1000, gain: 100, gainPercent: 10, inflationAdjustedValue: 1078, ...overrides },
@@ -43,7 +43,6 @@ describe('StockChart', () => {
   describe('display mode rendering', () => {
     it('renders accumulated mode with portfolioValue as primary line', () => {
       const { container } = render(<StockChart data={makeDataPoints()} displayMode="accumulated" />);
-      // The chart should render — no crash is the primary assertion
       expect(container.querySelector('.stock-chart')).toBeInTheDocument();
     });
 
@@ -141,7 +140,6 @@ describe('StockChart', () => {
       const { container } = render(
         <StockChart data={makeDataPoints()} displayMode="accumulated" inflationAdjusted={true} />
       );
-      // Just verify the chart renders — legend names are set on Recharts Line components
       expect(container.querySelector('.stock-chart')).toBeInTheDocument();
     });
 

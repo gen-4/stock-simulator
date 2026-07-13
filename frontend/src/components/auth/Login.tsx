@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { login, clearError } from '@/store/slices/authSlice';
+import type { RootState } from '@/store';
 import '@/components/styles/auth.css';
 
 const Login = () => {
@@ -11,7 +12,7 @@ const Login = () => {
   });
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { loading, error, isAuthenticated } = useSelector(state => state.auth);
+  const { loading, error, isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -25,14 +26,14 @@ const Login = () => {
     };
   }, [dispatch]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     dispatch(login(formData));
   };
